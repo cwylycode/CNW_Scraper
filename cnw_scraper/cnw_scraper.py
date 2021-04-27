@@ -15,8 +15,6 @@ There's other stuff from the website you could potentially get, such as trending
 
 import aiohttp
 import asyncio
-import lxml
-import cchardet
 from bs4 import BeautifulSoup,SoupStrainer
 from enum import Enum
 from os import name as _osname
@@ -27,7 +25,7 @@ opt_custom_user_agent = ""
 opt_include_description = True
 opt_silence_logs = False
 _DEFAULT_UA = "Totally Not A Bot"
-_PARSER = "lxml"
+_PARSER = "html.parser"
 _TIMEOUT = aiohttp.ClientTimeout(total=15,connect=10)
 if _osname == "nt":
     # Prevents Windows-specific nonsense about "Event loop is closed" with asyncio loop policy
@@ -390,4 +388,6 @@ def scrape_random():
     return profile
 
 if __name__ == "__main__":
-    input("What are you doing here? You're not supposed to run this program by itself. Shoo.")
+    # input("What are you doing here? You're not supposed to run this program by itself. Shoo.")
+    profiles = scrape_category(Category.CEOS,1,1,"name")
+    print(*profiles[:5],sep='\n\n')
