@@ -6,24 +6,25 @@ Celebrity Net Worth website scraper - Scrapes profile data from people and thing
 
 Purpose: Scrape celebritynetworth.com and compile the profile data of celebrities, businessmen, companies, etc. so they can be used for data aggregation. What you use the data for is ultimately up to you. You could parse the data into CSV/JSON/WHATEVER and save the files, you could sort and present it through pandas and matplotlib, or you could simply print out and display the profile data directly and cry at how poor you are compared to all of them. Also, you can periodically call the functions to get new versions of the profiles when and if they get updated in the future.
 
-Usage: Use the scrape_* functions to collect the profile data the way you want. Each function essentially visits the site through URLs, parses the profiles and collects the data it finds and returns it through profile objects. Site URLs are handled asynchronously, which means you don't have to wait for one page to finish before the program moves onto the next - all pages get downloaded at the same time and then parsed sequentially once they all arrive. If you have connection problems, or if their servers decide they no longer like you, then the appropriate error gets thrown, the app crashes, the data currently collected gets dropped and you'll have to restart. This shouldn't ever be a problem, though, and the error will most likely be on your end. The site boasts tens of thousands of profiles and, even when getting everything with scrape_all and with the included descriptions, the returned data shouldn't lead to memory errors.
+Usage: Use the scrape_* functions to collect the profile data the way you want. Each function essentially visits the site through URLs, parses the profiles and collects the data it finds and returns it through Profile objects. Site URLs are handled asynchronously, which means you don't have to wait for one page to finish before the program moves onto the next - all pages get downloaded at the same time and then parsed sequentially once they all arrive. If you have connection problems, or if their servers decide they no longer like you, then the appropriate error gets thrown, the app crashes, the data currently collected gets dropped and you'll have to restart. This shouldn't ever be a problem, though, and the error will most likely be on your end. The site boasts tens of thousands of profiles and, even when getting everything with scrape_all and with the included descriptions, the returned data shouldn't lead to memory issues.
 
-Options: This program uses print logs to show the stages of what's happening when you call a function - change opt_silence_logs to true to prevent logging. You can also change the user-agent for the client connection to something else through opt_custom_user_agent. Finally, change opt_include_description to false if you don't want your profiles to include the description portion (which can be lengthy and arguably needless for data processing).
+Options & Logging: This program uses print logs to show the stages of what's happening when you call a function - change opt_silence_logs to true to prevent logging. You can also change the user-agent for the client connection to something else through opt_custom_user_agent. Finally, change opt_include_description to false if you don't want your profiles to include the description portion (which can be lengthy and arguably needless for data processing).
 
-There's other stuff from the website you could potentially get, such as trending profiles, couples, articles, home page stuff, etc. They aren't implemented in this scraper because at that point you may as well just visit the website anyway. Fun fact: if you look on the site map XML for CNW, you'll find a directory for the maps section and inside you'll see that there's waaay more locations to choose from than the ones listed here in the Location Enum.
+There's other stuff from the website you could potentially get, such as trending profiles, couples, articles, home page stuff, etc. They aren't implemented in this scraper because at that point you may as well just visit the website anyway. Fun fact: if you look on the site map XML, you'll find a directory for the maps section and inside you'll see that there's waaay more locations to choose from than the ones listed here in the Location Enum.
 """
 
 import aiohttp
 import asyncio
+import logging
 from bs4 import BeautifulSoup,SoupStrainer
 from enum import Enum
-from os import name as _osname
+from inspect import stack as _stack
+from os import name as _osname, path as _ospath
 
 # ----------Setup & Initialize
 
 opt_custom_user_agent = ""
 opt_include_description = True
-opt_silence_logs = False
 _DEFAULT_UA = "Totally Not A Bot"
 _PARSER = "html.parser"
 _TIMEOUT = aiohttp.ClientTimeout(total=15,connect=10)
@@ -32,6 +33,31 @@ if _osname == "nt":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # ---------- Classes & Enumerations
+
+class Logs:
+    enable_logging = False
+    verbose = True
+    write_to_file = True
+    print_to_console = True
+    _logger = None
+
+    @classmethod
+    def _setup(cls):
+        path = _ospath.split([i.filename for i in _stack()][-1])
+        log_file = "".join([path[0],"/",path[1].replace(".py",""),"-cnw.log"])
+        # this creates file no matter what - fix
+        logging.basicConfig(filename=log_file,filemode="w",format="%(asctime)s - LOG: %(message)s",datefmt="%Y-%m-%d %X",level="INFO")
+        cls._logger = logging.getLogger()
+
+    @classmethod
+    def _log(cls,txt,is_verbose=False):
+        # Used for printing/writing status updates and logging for the application
+        if not cls.enable_logging: return
+        if not cls.verbose and is_verbose: return
+        if cls.write_to_file: cls._logger.info(txt)
+        if cls.print_to_console: print("CNW - "+txt)
+
+Logs._setup()
 
 class Category(Enum):
     """
@@ -122,14 +148,9 @@ class _Profile:
 
 # ---------- Base Functionality
 
-def _log(txt):
-    # Used for printing status updates and logging for the application
-    if opt_silence_logs: return
-    print("CNW - "+txt)
-
 def _parse_profile(page_html):
     # Parse the HTML soup on the profile's page and return the data as a Profile object
-    _log("Parsing HTML ...")
+    Logs._log("Parsing HTML ...",True)
     soup = BeautifulSoup(page_html,features=_PARSER,parse_only=SoupStrainer(attrs={"id":"single__main"}))
     soup_name = soup.find(attrs={"itemprop":"name"})["content"]
     soup_stats = soup.find("table",attrs={"class":"celeb_stats_table"})
@@ -155,7 +176,7 @@ def _parse_profile(page_html):
             desc.append(tag.text+'\n\n')
         desc = "".join(desc)
     else: desc = ""
-    _log(f"Compiling profile of '{data['Name']}' ...")
+    Logs._log(f"Compiling profile of '{data['Name']}' ...",True)
     return _Profile(data, desc)
 
 async def _fetch(url,session):
@@ -169,7 +190,7 @@ async def _fetch(url,session):
         # Kill program if we have a connection error
         await asyncio.sleep(0.5)
         raise err
-    _log(f"Fetched page: '{data['status']}' - {data['url']}")
+    Logs._log(f"Fetched page: '{data['status']}' - {data['url']}",True)
     return data
 
 async def _client(urls):
@@ -183,16 +204,16 @@ async def _client(urls):
 
 def _get_pages(urls):
     # Initialize an async client run to connect to site and collect the HTML data from the supplied URLs
-    _log(f"Getting ({len(urls)}) page(s) ...")
+    Logs._log(f"Getting ({len(urls)}) page(s) ...",True)
     pages = asyncio.run(_client(urls))
-    _log("Compiling page list ...")
+    Logs._log("Compiling page list ...",True)
     return list(pages)
 
 def _get_profiles_from_list_in_page(base_page,target_id):
     # Run page through soup and get each listed profile URL inside it
     profile_list = BeautifulSoup(base_page,features=_PARSER,parse_only=SoupStrainer(attrs={"id":target_id}))
     if not profile_list:
-        _log("No Profiles found!")
+        Logs._log("No Profiles found!")
         return []
     profile_urls = [a["href"] for a in profile_list.select("a")]
     # Get profiles from URLs
@@ -204,7 +225,7 @@ def _sort_profiles(profiles,sort_by,sort_ascending):
     if sort_by and sort_by in ["name","worth"]:
         # Key to sort by either profile name or net worth
         k = lambda x: x.stats["Name"] if sort_by == "name" else int(x.stats["Net Worth"])
-        _log(f"Sorting Profiles by {sort_by.capitalize()} ({'Ascending' if sort_ascending else 'Descending'}) ...")
+        Logs._log(f"Sorting Profiles by {sort_by.capitalize()} ({'Ascending' if sort_ascending else 'Descending'}) ...",True)
         profiles = sorted(profiles,key=k,reverse=not sort_ascending)
     return profiles
 
@@ -218,14 +239,14 @@ def scrape_all(sort_by:str="",sort_ascending:bool=True):
     :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
     :return: A generator.
     """
-    _log("Starting All function ...")
+    Logs._log("Starting All function ...")
     for cat in Category:
         profiles = scrape_category(cat,1,-1,sort_by,sort_ascending)
-        _log("Profiles compilation finished ...")
+        Logs._log(f"Compilation of {cat.name} profiles finished ...")
         profiles = _sort_profiles(profiles,sort_by,sort_ascending)
         yield profiles
     # Wrap up
-    _log("All function finished.")
+    Logs._log("All function finished.")
 
 def scrape_category(category:Category,starting_page:int=1,additional_pages:int=0,sort_by:str="",sort_ascending:bool=True):
     """
@@ -237,11 +258,11 @@ def scrape_category(category:Category,starting_page:int=1,additional_pages:int=0
     :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
     :return: A list of Profile objects - optionally sorted.
     """
-    _log("Starting Category function ...")
+    Logs._log("Starting Category function ...")
     if not isinstance(category,Category):
         raise Exception("Invalid Category Parameter")
     base_url = "https://www.celebritynetworth.com/category/" + category.value + "/page/"
-    _log(f"Getting pages from {category.name} category ...")
+    Logs._log(f"Getting pages from {category.name} category ...")
     init_page = _get_pages([base_url+str(starting_page)+'/'])[0]
     if init_page["status"] >= 400:
         raise Exception("Starting page is out of range of category.")
@@ -251,26 +272,26 @@ def scrape_category(category:Category,starting_page:int=1,additional_pages:int=0
     while True:
         # Either we get all the pages wanted or we go over and get 404'd, both will end the loop
         if count == starting_page+additional_pages:
-            _log(f"Got all requested pages ({i}) ...")
+            Logs._log(f"Got all requested pages ({i}) ...",True)
             break
         count += 1
         cat_page = _get_pages([base_url+str(count)+'/'])[0]
         if cat_page["status"] >= 400:
-            _log(f"Reached end of category: ({i}) pages collected ...")
+            Logs._log(f"Reached end of category: ({i}) pages collected ...",True)
             break
         i += 1
         pages.append(cat_page)
     # Got all the valid pages, now parse them of the profile URLs
-    _log("Parsing profiles from pages ...")
+    Logs._log("Parsing profiles from pages ...")
     profiles = []
     for i,page in enumerate(pages):
-        _log(f"Category page {i+1} start ...")
+        Logs._log(f"Category page {i+1} start ...",True)
         page_profiles = _get_profiles_from_list_in_page(page["html"],"post_listing")
         profiles.extend(page_profiles)
     # Wrap up
-    _log("Profiles compilation finished ...")
+    Logs._log("Profiles compilation finished ...")
     profiles = _sort_profiles(profiles,sort_by,sort_ascending)
-    _log("Category function finished.")
+    Logs._log("Category function finished.")
     return profiles
 
 def scrape_map(location:Location,sort_by:str="",sort_ascending:bool=True):
@@ -281,19 +302,19 @@ def scrape_map(location:Location,sort_by:str="",sort_ascending:bool=True):
     :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
     :return: A list of Profile objects - optionally sorted.
     """
-    _log("Starting Map function ...")
+    Logs._log("Starting Map function ...")
     if not isinstance(location,Location):
         raise Exception("Invalid Location Parameter")
     map_url = "https://www.celebritynetworth.com/map/" + location.value + "/"
-    _log(f"Getting map page for {location.name} ...")
+    Logs._log(f"Getting map page for {location.name} ...")
     html = _get_pages([map_url])[0]["html"]
-    _log("Collecting profile URLs from map ...")
+    Logs._log("Collecting profile URLs from map ...")
     # Get profiles from list inside page
     profiles = _get_profiles_from_list_in_page(html,"cnwMaps_mainProfileList")
     # Wrap up
-    _log("Profiles compilation finished ...")
+    Logs._log("Profiles compilation finished ...")
     profiles = _sort_profiles(profiles,sort_by,sort_ascending)
-    _log("Map function finished.")
+    Logs._log("Map function finished.")
     return profiles
 
 def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
@@ -306,17 +327,17 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
     :return: A list of Profile objects - optionally sorted.
     """
-    _log("Starting Names function ...")
+    Logs._log("Starting Names function ...")
     search_urls = []
     parse_name = lambda n: "".join(filter(lambda x: x.isalnum() or x == " ", n)).strip()
-    _log("Creating search URLs ...")
+    Logs._log("Creating search URLs ...")
     for name in names:
         # Parse current name for URL query and add to search list - with no duplicate URLs
         query = parse_name(name)
         url = "https://www.celebritynetworth.com/dl/" + query.replace(" ", "-").lower() + "/"
         if url in search_urls: continue
         search_urls.append(url)
-    _log("Getting search results ...")
+    Logs._log("Getting search results ...")
     # Collect the search result pages from the URLs
     results = _get_pages(search_urls)
     # Loop through the resulting search pages and store URL for profile in a list if valid
@@ -330,20 +351,20 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
             txt = lead.text.lower()
             if all([x in txt for x in current_name.lower().split()]):
                 # It does - get the target's profile url and 
-                _log(f"FOUND: '{current_name}' matches with result.")
+                Logs._log(f"FOUND: '{current_name}' matches with result.",True)
                 profile_urls.append(lead.find("a")["href"])
             else:
-                _log(f"FAILED: '{current_name}' doesn't seem to match search result.\n")
+                Logs._log(f"FAILED: '{current_name}' doesn't seem to match search result.\n",True)
         else:
-            _log(f"FAILED: Search for '{current_name}' returned no results.")
+            Logs._log(f"FAILED: Search for '{current_name}' returned no results.",True)
     # Get and parse the pages
-    _log("Getting matching profiles ...")
+    Logs._log("Getting matching profiles ...")
     profile_pages = _get_pages(profile_urls)
     profiles = [_parse_profile(page["html"]) for page in profile_pages]
     # Wrap up
-    _log("Profiles compilation finished ...")
+    Logs._log("Profiles compilation finished ...")
     profiles = _sort_profiles(profiles,sort_by,sort_ascending)
-    _log("Names function finished.")
+    Logs._log("Names function finished.")
     return profiles
 
 def scrape_top(category:Category=None,sort_by:str="",sort_ascending:bool=True):
@@ -354,7 +375,7 @@ def scrape_top(category:Category=None,sort_by:str="",sort_ascending:bool=True):
     :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
     :return: A list of Profile objects - optionally sorted.
     """
-    _log("Starting Top function ...")
+    Logs._log("Starting Top function ...")
     if category:
         # Check if there's a category and assign the appropriate URL
         if not isinstance(category,Category):
@@ -362,15 +383,15 @@ def scrape_top(category:Category=None,sort_by:str="",sort_ascending:bool=True):
         top_url = "https://www.celebritynetworth.com/list/top-50-" + category.value + "/"
     else:
         top_url = "https://www.celebritynetworth.com/list/top-100-richest-people-in-the-world/"
-    _log(f"Getting toplist page for {category.name if category else 'Top 100'} category ...")
+    Logs._log(f"Getting toplist page for {category.name if category else 'Top 100'} category ...")
     html = _get_pages([top_url])[0]["html"]
-    _log("Collecting profile URLs from list ...")
+    Logs._log("Collecting profile URLs from list ...")
     # Get profiles from list inside page
     profiles = _get_profiles_from_list_in_page(html,"top_100_list")
     # Wrap up
-    _log("Profiles compilation finished ...")
+    Logs._log("Profiles compilation finished ...")
     profiles = _sort_profiles(profiles,sort_by,sort_ascending)
-    _log("Top function finished.")
+    Logs._log("Top function finished.")
     return profiles
 
 def scrape_random():
@@ -378,16 +399,17 @@ def scrape_random():
     Uses the site's random feature to grab a random profile.\n
     :return: A single Profile object from a randomly chosen subject.
     """
-    _log("Starting Random function ...")
+    Logs._log("Starting Random function ...")
     url = "https://www.celebritynetworth.com/random/"
     html = _get_pages([url])[0]["html"]
     profile = _parse_profile(html)
     # Wrap up
-    _log("Profile compilation finished ...")
-    _log("Random function finished.")
+    Logs._log("Profile compilation finished ...")
+    Logs._log("Random function finished.")
     return profile
 
 if __name__ == "__main__":
     # input("What are you doing here? You're not supposed to run this program by itself. Shoo.")
     profiles = scrape_category(Category.CEOS,1,1,"name")
+    print()
     print(*profiles[:5],sep='\n\n')
