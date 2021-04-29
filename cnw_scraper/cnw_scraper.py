@@ -35,6 +35,13 @@ if _osname == "nt":
 # ---------- Classes & Enumerations
 
 class Logs:
+    """
+    Handles logging of what this program is doing. It will write logs to either a file or console, or both. Use init_file_logger to write logs to a file at a specified path (which are actually written upon exit of program). If the function isn't called and both enable_logging and write_to_file are active, it will be called automatically with default settings. The file, if present, gets overwritten each run, so if you want to save a log file, simply rename the actual file to something else.\n
+    :enable_logging: Use logs?
+    :verbose: Some parts of the program use extensive logging for every detail. Enable the extra logging?
+    :write_to_file: Should logs be saved to a file?
+    :print_to_console: Use print function to print logs to console?
+    """
     enable_logging = False
     verbose = True
     write_to_file = True
@@ -42,11 +49,18 @@ class Logs:
     _logger = None
 
     @classmethod
-    def _setup(cls):
+    def init_file_logger(cls,file_path:str="",include_datetime:bool=True):
+        """
+        Initialize logging to a file. Subsequent calls do nothing, only the first call initializes the file logging. This function is automatically called, once, if write_to_file is enabled.\n
+        :file_path: Provide a valid directory path (relative or absolute) and name for the file (name will end with a '.log' extension). File is created if it isn't there, and if it is, it will be overwritten. E.g. - ./my_project/logs/my_cnw_logs -> 'my_cnw_logs.log' file in logs directory.\n
+        :include_datetime: Bool for whether or not to include a formatted date/time marker for each log entry that gets written out to the file.\n
+        :return: None
+        """
+        if cls._logger: return
         path = _ospath.split([i.filename for i in _stack()][-1])
-        log_file = "".join([path[0],"/",path[1].replace(".py",""),"-cnw.log"])
-        # this creates file no matter what - fix
-        logging.basicConfig(filename=log_file,filemode="w",format="%(asctime)s - LOG: %(message)s",datefmt="%Y-%m-%d %X",level="INFO")
+        log_file = file_path if file_path else "".join([path[0],"/",path[1].replace(".py",""),"-cnw.log"])
+        frmt = "%(asctime)s - LOG: %(message)s" if include_datetime else "LOG: %(message)s"
+        logging.basicConfig(filename=log_file,filemode="w",format=frmt,datefmt="%Y-%m-%d %X",level="INFO")
         cls._logger = logging.getLogger()
 
     @classmethod
@@ -54,10 +68,10 @@ class Logs:
         # Used for printing/writing status updates and logging for the application
         if not cls.enable_logging: return
         if not cls.verbose and is_verbose: return
-        if cls.write_to_file: cls._logger.info(txt)
+        if cls.write_to_file:
+            if not cls._logger: cls.init_file_logger()
+            cls._logger.info(txt)
         if cls.print_to_console: print("CNW - "+txt)
-
-Logs._setup()
 
 class Category(Enum):
     """
@@ -410,6 +424,7 @@ def scrape_random():
 
 if __name__ == "__main__":
     # input("What are you doing here? You're not supposed to run this program by itself. Shoo.")
+    Logs.
     profiles = scrape_category(Category.CEOS,1,1,"name")
     print()
     print(*profiles[:5],sep='\n\n')
