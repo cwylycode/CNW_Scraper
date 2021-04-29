@@ -36,23 +36,20 @@ if _osname == "nt":
 
 class Logs:
     """
-    Handles logging of what this program is doing. It will write logs to either a file or console, or both. Use init_file_logger to write logs to a file at a specified path (which are actually written upon exit of program). If the function isn't called and both enable_logging and write_to_file are active, it will be called automatically with default settings. The file, if present, gets overwritten each run, so if you want to save a log file, simply rename the actual file to something else.\n
-    :enable_logging: Use logs?
+    Handles logging of what this program is doing. It will write logs to either a file or console, or both. Use write_to_file function to write logs to a file at a specified path (which are actually written upon exit of program). The log file, if present, gets overwritten each run, so if you want to save a log file, simply rename the actual file to something else.\n
+    Note: All of the following boolean values are False by default.\n
+    :print_to_console: Use print function to print logs to console?\n
     :verbose: Some parts of the program use extensive logging for every detail. Enable the extra logging?
-    :write_to_file: Should logs be saved to a file?
-    :print_to_console: Use print function to print logs to console?
     """
-    enable_logging = False
-    verbose = True
-    write_to_file = True
-    print_to_console = True
+    print_to_console = False
+    verbose = False
     _logger = None
 
     @classmethod
-    def init_file_logger(cls,file_path:str="",include_datetime:bool=True):
+    def write_to_file(cls,file_path:str="",include_datetime:bool=True):
         """
-        Initialize logging to a file. Subsequent calls do nothing, only the first call initializes the file logging. This function is automatically called, once, if write_to_file is enabled.\n
-        :file_path: Provide a valid directory path (relative or absolute) and name for the file (name will end with a '.log' extension). File is created if it isn't there, and if it is, it will be overwritten. E.g. - ./my_project/logs/my_cnw_logs -> 'my_cnw_logs.log' file in logs directory.\n
+        Initialize logging to a file. Subsequent calls do nothing, only the first call initializes the file logging. If arguments are left out, the default args are used. The default file path and name is in the same directory and name as __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'\n
+        :file_path: Provide a valid directory path (relative or absolute) and name for the file (name will end with a '.log' extension). File is created if it isn't there, and if it is, it will be overwritten. E.g. - './my_project/logs/my_cnw_logs' -> 'my_cnw_logs.log' file in logs directory.\n
         :include_datetime: Bool for whether or not to include a formatted date/time marker for each log entry that gets written out to the file.\n
         :return: None
         """
@@ -66,11 +63,8 @@ class Logs:
     @classmethod
     def _log(cls,txt,is_verbose=False):
         # Used for printing/writing status updates and logging for the application
-        if not cls.enable_logging: return
         if not cls.verbose and is_verbose: return
-        if cls.write_to_file:
-            if not cls._logger: cls.init_file_logger()
-            cls._logger.info(txt)
+        if cls._logger: cls._logger.info(txt)
         if cls.print_to_console: print("CNW - "+txt)
 
 class Category(Enum):
@@ -424,7 +418,10 @@ def scrape_random():
 
 if __name__ == "__main__":
     # input("What are you doing here? You're not supposed to run this program by itself. Shoo.")
-    Logs.
-    profiles = scrape_category(Category.CEOS,1,1,"name")
+    # Logs.write_to_file()
+    # Logs.write_to_file("log_test",include_datetime=True)
+    # Logs.print_to_console = True
+    # Logs.verbose = True
+    profiles = scrape_map(Location.CANADA,"name")
     print()
     print(*profiles[:5],sep='\n\n')
