@@ -36,7 +36,7 @@ if _osname == "nt":
 
 class Logs:
     """
-    Handles logging of what this program is doing. It will write logs to either a file or console, or both. Use write_to_file function to write logs to a file at a specified path (which are actually written upon exit of program). The log file, if present, gets overwritten each run, so if you want to save a log file, simply rename the actual file to something else.\n
+    Handles logging of what this program is doing. It will write logs to either a file or console, or both. Use write_to_file function to write logs to a file at a specified path. The log file, if present, gets overwritten each run, so if you want to save a log file, simply rename the actual file to something else.\n
     Note: All of the following boolean values are False by default.\n
     :print_to_console: Use print function to print logs to console?\n
     :verbose: Some parts of the program use extensive logging for every detail. Enable the extra logging?
@@ -48,16 +48,17 @@ class Logs:
     @classmethod
     def write_to_file(cls,file_path:str="",include_datetime:bool=True):
         """
-        Initialize logging to a file. Subsequent calls do nothing, only the first call initializes the file logging. If arguments are left out, the default args are used. The default file path and name is in the same directory and name as __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'\n
-        :file_path: Provide a valid directory path (relative or absolute) and name for the file (name will end with a '.log' extension). File is created if it isn't there, and if it is, it will be overwritten. E.g. - './my_project/logs/my_cnw_logs' -> 'my_cnw_logs.log' file in logs directory.\n
+        Initialize logging to a file using an established directory. Subsequent calls do nothing, only the first call does anything. If arguments are left out, the default args are used. The default file path and name is in the same directory and name as __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'\n
+        Note: File is created if it isn't there, and if it is, it will be overwritten. Also, actual file writing only occurs upon succesful program exit.\n
+        :file_path: Provide a valid directory path (relative or absolute) and name for the file (name will end with a '.log' extension). E.g. - './my_project/logs/my_cnw_logs' -> 'my_cnw_logs.log' file in logs directory.\n
         :include_datetime: Bool for whether or not to include a formatted date/time marker for each log entry that gets written out to the file.\n
         :return: None
         """
         if cls._logger: return
         path = _ospath.split([i.filename for i in _stack()][-1])
-        log_file = file_path if file_path else "".join([path[0],"/",path[1].replace(".py",""),"-cnw.log"])
+        log_file = file_path if file_path else "".join([path[0],"/",path[1].replace(".py",""),"-cnw"])
         frmt = "%(asctime)s - LOG: %(message)s" if include_datetime else "LOG: %(message)s"
-        logging.basicConfig(filename=log_file,filemode="w",format=frmt,datefmt="%Y-%m-%d %X",level="INFO")
+        logging.basicConfig(filename=log_file+".log",filemode="w",format=frmt,datefmt="%Y-%m-%d %X",level="INFO")
         cls._logger = logging.getLogger()
 
     @classmethod
@@ -203,11 +204,13 @@ async def _fetch(url,session):
 
 async def _client(urls):
     # Asynchronously get the requested pages and return list of multiple page HTML responses
+    Logs._log("Establishing connection ...",True)
     ua = opt_custom_user_agent if opt_custom_user_agent else _DEFAULT_UA
     async with aiohttp.ClientSession(headers={"user-agent":ua}) as session:
         tasks = [_fetch(url,session) for url in urls]
         page_list = await asyncio.gather(*tasks)
     await asyncio.sleep(0.5) # Graceful shutdown of client connections is needed
+    Logs._log("Collected pages from URLs ...",True)
     return page_list
 
 def _get_pages(urls):
@@ -233,7 +236,7 @@ def _sort_profiles(profiles,sort_by,sort_ascending):
     if sort_by and sort_by in ["name","worth"]:
         # Key to sort by either profile name or net worth
         k = lambda x: x.stats["Name"] if sort_by == "name" else int(x.stats["Net Worth"])
-        Logs._log(f"Sorting Profiles by {sort_by.capitalize()} ({'Ascending' if sort_ascending else 'Descending'}) ...",True)
+        Logs._log(f"Sorting Profiles by {sort_by.capitalize()} ({'Ascending' if sort_ascending else 'Descending'}) ...")
         profiles = sorted(profiles,key=k,reverse=not sort_ascending)
     return profiles
 
@@ -419,9 +422,9 @@ def scrape_random():
 if __name__ == "__main__":
     # input("What are you doing here? You're not supposed to run this program by itself. Shoo.")
     # Logs.write_to_file()
-    # Logs.write_to_file("log_test",include_datetime=True)
+    Logs.write_to_file("log_test",include_datetime=True)
     # Logs.print_to_console = True
-    # Logs.verbose = True
-    profiles = scrape_map(Location.CANADA,"name")
+    Logs.verbose = True
+    profiles = scrape_category(Category.NFL,2,3,"name",False)
     print()
     print(*profiles[:5],sep='\n\n')
