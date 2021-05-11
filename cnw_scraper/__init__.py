@@ -20,8 +20,6 @@ ETC...
 There's other stuff from the website you could potentially get, such as trending profiles, couples, articles, home page stuff, etc. They aren't implemented in this scraper because at that point you may as well just visit the website anyway. Fun fact: if you look on the site map XML, you'll find a directory for the maps section and inside you'll see that there's waaay more locations to choose from than the ones listed here in the Location Enum.
 """
 
-__version__="1.0.0"
-
 from cnw_scraper.api import(
     scrape_all,
     scrape_category,

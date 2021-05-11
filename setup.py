@@ -3,14 +3,13 @@ Profile data webscraper for the site celebritynetworth.com
 """
 
 from setuptools import setup
-import cnw_scraper
 
 with open("README.md") as f:
     ld = f.read()
 
 setup(
     name="cnw_scraper",
-    version=str(cnw_scraper.__version__),
+    version="1.0.0",
     description="Scrapes profile data from people and things you specify (or generalize).",
     license="MIT",
     long_description=ld,
