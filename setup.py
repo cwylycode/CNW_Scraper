@@ -9,7 +9,7 @@ with open("README.md") as f:
     ld = f.read()
 
 setup(
-    name="Celebrity Net Worth website scraper",
+    name="cnw_scraper",
     version=str(cnw_scraper.__version__),
     description="Scrapes profile data from people and things you specify (or generalize).",
     license="MIT",
@@ -23,7 +23,6 @@ setup(
         "async-timeout==3.0.1",
         "attrs==21.2.0",
         "beautifulsoup4==4.9.3",
-        "bs4==0.0.1",
         "chardet==4.0.0",
         "idna==3.1",
         "multidict==5.1.0",
