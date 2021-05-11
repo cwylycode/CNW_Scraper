@@ -2,19 +2,33 @@
 
 Scrapes profile data from people and things on the website celebritynetworth.com that you specify (or generalize).
 
-Coded by hexadeci-male.
+Coded in Python by hexadeci-male.
 
 ## Install
 
 Installation is done with PIP and can be done from GitHub, either as a Git install or a download/clone that you cd into. This package isn't available on PyPI, in case you were wondering.
 
-**Note:** It's best to install this package in a [virtual environment](https://docs.python.org/3/library/venv.html) instead of your main system python because of potential dependency conflicts.
+**Requirements:**
 
-**Requires:** Python >= 3.8 & aiohttp 3.7.4.post0 + beautifulsoup 4.9.3 - See setup.py for full dependencies.
+python >= 3.8
+aiohttp 3.7.4.post0
+beautifulsoup 4.9.3
+(see setup.py for full dependencies.)
+
+**Note:** It's recommended to install this package in a [virtual environment](https://docs.python.org/3/library/venv.html) instead of your main system python because of potential dependency conflicts.
 
 **Install from GitHub (you need Git):**
+
 ```
 pip install git+https://github.com/hexadeci-male/CNW_Scraper.git
+```
+
+**Install from repo:**
+
+```
+Download/Clone from GitHub
+cd into the downloaded repo where the setup.py file is
+pip install .
 ```
 
 ## About
@@ -23,7 +37,7 @@ I was interested in seeing if I could get income and wealth data from celebritie
 
 ## Contributions
 
-This project is not maintained and I doubt I'll work on it further. It was mostly a coding exercise/idea.
+This project won't be consistently maintained and I doubt I'll work on it further. It was mostly a coding exercise/idea.
 
 ## License
 
