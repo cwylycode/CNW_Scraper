@@ -1,4 +1,4 @@
-class _Profile:
+class Profile:
     """
     Contains information from a subject's net worth page (print me for a pretty display of my contents). This object isn't created directly, but rather is made through the api functions.\n
     :stats: Dictionary containing name, net worth, salary, gender, nationality, etc. - Net Worth gets printed out as a dollar amount, but is actually stored as a real number string.\n

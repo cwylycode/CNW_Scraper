@@ -1,7 +1,7 @@
-"""
+__doc__="""
 Celebrity Net Worth website scraper
 ===================================
-Scrapes profile data from people and things you specify (or generalize).
+Scrapes profile data from people and things on the website celebritynetworth.com that you specify (or generalize).
 
 Purpose
 -------
@@ -20,8 +20,7 @@ ETC...
 There's other stuff from the website you could potentially get, such as trending profiles, couples, articles, home page stuff, etc. They aren't implemented in this scraper because at that point you may as well just visit the website anyway. Fun fact: if you look on the site map XML, you'll find a directory for the maps section and inside you'll see that there's waaay more locations to choose from than the ones listed here in the Location Enum.
 """
 
-if __name__ == "__main__":
-    input("What are you doing here? You're not supposed to run this program by itself. Shoo.")
+__version__="1.0.0"
 
 from cnw_scraper.api import(
     scrape_all,

@@ -5,7 +5,7 @@ import asyncio
 import os
 from cnw_scraper.logs import Logs
 from cnw_scraper.options import Options as opt
-from cnw_scraper.profile import _Profile
+from cnw_scraper.profile import Profile
 from bs4 import BeautifulSoup,SoupStrainer
 
 # Prevents Windows-specific nonsense about "Event loop is closed" with asyncio loop policy
@@ -41,7 +41,7 @@ def parse_profile(page_html):
         desc = "".join(desc)
     else: desc = ""
     Logs._log(f"Compiling profile of '{data['Name']}' ...",True)
-    return _Profile(data, desc)
+    return Profile(data, desc)
 
 async def fetch(url,session):
     try:
