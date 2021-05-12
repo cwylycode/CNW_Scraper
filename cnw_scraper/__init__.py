@@ -9,7 +9,7 @@ Scrape celebritynetworth.com and compile the profile data of celebrities, busine
 
 Usage
 -----
-Use the scrape_* functions to collect the profile data the way you want. Each function essentially visits the site through URLs, parses the profiles and collects the data it finds and returns it through Profile objects. Site URLs are handled asynchronously, which means you don't have to wait for one page to finish before the program moves onto the next - all pages get downloaded at the same time and then parsed sequentially once they all arrive. If you have connection problems, or if their servers decide they no longer like you, then the appropriate error gets thrown, the app crashes, the data currently collected gets dropped and you'll have to restart. This shouldn't ever be a problem, though, and the error will most likely be on your end. The site boasts tens of thousands of profiles and, even when getting everything with scrape_all and with the included descriptions, the returned data shouldn't lead to memory issues.
+Use the scrape_* functions to collect the profile data the way you want. Each function essentially visits the site through URLs, parses the profiles and collects the data it finds and returns it through Profile objects. Site URLs are handled asynchronously, which means you don't have to wait for one page to finish before the program moves onto the next - all pages get downloaded at the same time and then parsed sequentially once they all arrive. If you have connection problems, or if their servers decide they no longer like you, then the appropriate error gets thrown, the app crashes, the data currently collected gets dropped and you'll have to restart. This shouldn't ever be a problem, though, and the error will most likely be on your end. That said, you can circumvent this by using try/except statements to 'retry' the scrape attempt.
 
 Options & Logging
 -----------------
@@ -17,7 +17,7 @@ This program uses console and file logs to show the stages of what's happening w
 
 ETC...
 ------
-There's other stuff from the website you could potentially get, such as trending profiles, couples, articles, home page stuff, etc. They aren't implemented in this scraper because at that point you may as well just visit the website anyway. Fun fact: if you look on the site map XML, you'll find a directory for the maps section and inside you'll see that there's waaay more locations to choose from than the ones listed here in the Location Enum.
+The site boasts tens of thousands of profiles, which can be all collected using the scrape_all function, if you dare. There's other stuff from the website you could potentially get, such as trending profiles, couple's info, articles, home page stuff, etc. They aren't implemented in this scraper because at that point you may as well just visit the website anyway. Fun fact: if you look on the site map XML, you'll find a directory for the maps section and inside you'll see that there's waaay more locations to choose from than the ones listed here in the Location Enum.
 """
 
 from cnw_scraper.api import(
@@ -32,3 +32,4 @@ from cnw_scraper.categories import Category
 from cnw_scraper.locations import Location
 from cnw_scraper.logs import Logs
 from cnw_scraper.options import Options
+from cnw_scraper.profile import Profile
