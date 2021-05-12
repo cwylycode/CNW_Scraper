@@ -16,9 +16,9 @@ class Logs:
     @classmethod
     def write_to_file(cls,file_path:str="",include_datetime:bool=True):
         """
-        Initialize logging to a file using an established directory. Subsequent calls do nothing, only the first call does anything. If arguments are left out, the default args are used. The default file path and name is in the same directory and name as __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'\n
-        Note: File is created if it isn't there, and if it is, it will be overwritten. Also, actual file writing only occurs upon succesful program exit.\n
-        :file_path: Provide a valid directory path (relative or absolute) and name for the file (name will end with a '.log' extension). E.g. - './my_project/logs/my_cnw_logs' -> 'my_cnw_logs.log' file in logs directory.\n
+        Initialize logging to a file using an established directory. Subsequent calls do nothing, only the first call does anything. If the file_path argument is left out, the default arg is used. The default path is the directory level that calls this function and the name is collected from __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'\n
+        Note: File is created if it isn't there, and if it is, it will be overwritten. Also, actual file writing only occurs upon program exit.\n
+        :file_path: Provide an optional valid directory path (relative to where this function was called from or absolute) and name for the file (name will end with a '.log' extension). E.g. - './my_project/logs/my_cnw_logs' -> 'my_cnw_logs.log' file in logs directory.\n
         :include_datetime: Bool for whether or not to include a formatted date/time marker for each log entry that gets written out to the file.\n
         :return: None
         """
