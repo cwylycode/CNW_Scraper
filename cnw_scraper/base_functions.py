@@ -31,7 +31,7 @@ def parse_profile(page_html):
     if opt.include_description:
         for tag in soup_desc.children:
             if tag.name in ["div","img","table","style"]:
-                # Junk
+                # Junk data
                 continue
             if tag.name in ["ul","ol"]:
                 # Go through lists and collect info within
@@ -51,14 +51,14 @@ async def fetch(url,session):
             status = response.status
             data = {"status":status,"url":url,"html":html}
     except Exception as err:
-        # Kill program if we have a connection error
+        # Kill program if we have a connection error - it is up to the user if they want to re-establish a connection and try again.
         await asyncio.sleep(0.5)
         raise err
     Logs._log(f"Fetched page: '{data['status']}' - {data['url']}",True)
     return data
 
 async def client(urls):
-    # Asynchronously get the requested pages and return list of multiple page HTML responses
+    # Asynchronously get the requested pages and return a list of multiple page HTML responses
     Logs._log("Establishing connection ...",True)
     ua = opt.custom_user_agent if opt.custom_user_agent else opt._DEFAULT_UA
     async with aiohttp.ClientSession(headers={"user-agent":ua}) as session:
@@ -70,13 +70,14 @@ async def client(urls):
 
 def get_pages(urls):
     # Initialize an async client run to connect to site and collect the HTML data from the supplied URLs
-    Logs._log(f"Getting ({len(urls)}) page(s) ...",True)
+    Logs._log(f"Requesting ({len(urls)}) page(s) ...",True)
     pages = asyncio.run(client(urls))
     Logs._log("Compiling page list ...",True)
     return list(pages)
 
 def get_profiles_from_list_in_page(base_page,target_id):
     # Run page through soup and get each listed profile URL inside it
+    Logs._log("Getting profile links inside this page ...",True)
     profile_list = BeautifulSoup(base_page,features=opt._PARSER,parse_only=SoupStrainer(attrs={"id":target_id}))
     if not profile_list:
         Logs._log("No Profiles found!")
