@@ -121,16 +121,16 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     tag = "post_item anchored  search_result lead"
     for i,page in enumerate(results):
         lead = BeautifulSoup(page["html"],features=opt._PARSER,parse_only=SoupStrainer(attrs={"class":tag}))
-        if lead:
+        current_name = parse_name(names[i])
+        if lead.text:
             # There's a lead search result, check if the contents have our target's name
-            current_name = parse_name(names[i])
             txt = lead.text.lower()
             if all([x in txt for x in current_name.lower().split()]):
                 # It does - get the target's profile url and 
                 Logs._log(f"FOUND: '{current_name}' matches with result.",True)
                 profile_urls.append(lead.find("a")["href"])
             else:
-                Logs._log(f"FAILED: '{current_name}' doesn't seem to match search result.\n",True)
+                Logs._log(f"FAILED: '{current_name}' doesn't seem to match search result.",True)
         else:
             Logs._log(f"FAILED: Search for '{current_name}' returned no results.",True)
     # Get and parse the pages
