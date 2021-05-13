@@ -10,7 +10,8 @@ from bs4 import BeautifulSoup,SoupStrainer
 def scrape_all(sort_by:str="",sort_ascending:bool=True):
     """
     Make the website sweat! They knew what they were getting themselves into when they decided to fawn over the rich and famous. Long live the proletariat!\n
-    This is mostly just a joke function. Specifically, it's a generator that acts as a handle for the scrape_category function, essentially, that gets all available profiles as a result. It calls scrape_category on every category and collects all the profiles for them, yielding one category's worth of profiles at a time. It's basically the same thing as if you yourself were to call scrape_category for every category inside of a loop.\n
+    This is mostly just a joke function. Specifically, it's a generator that acts as a handle for the scrape_category function. It calls scrape_category on every category (alphabetically) and collects all the profiles for them on every page, yielding one entire category's worth of profiles at a time. It's basically the same thing as if you yourself were to call scrape_category for every category inside of a loop.\n
+    Note: This generator WILL take a while to complete if you decide to run till exhaustion, so it's best to make use of the logging system to know how far it has progressed.\n
     :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.\n
     :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
     :return: A generator.
@@ -27,9 +28,10 @@ def scrape_all(sort_by:str="",sort_ascending:bool=True):
 def scrape_category(category:Category,starting_page:int=1,additional_pages:int=0,sort_by:str="",sort_ascending:bool=True):
     """
     Get the profiles from a category within a page range. Pages are scraped from the very start of the starting page, all the way to the very last profile on the last additional page. By default, get only the profiles from the first page of the category.\n
+    Note: Some categories have hundreds of pages and may take a considerable amount of time to collect them all. You can activate logging to see how far the function has progressed.\n
     :category: Enum from Category class to use. E.g. - category = Category.AUTHORS\n
     :starting_page: The page to start scraping (>0). If page is out of range with category, a page exception is thrown.\n
-    :additional_pages: How many more pages to scrape after the starting_page. 0 is default and means no pages after. <0 means all valid pages after. If value is higher than the actual number of available pages, collect all valid pages from starting_page until the end of category.\n
+    :additional_pages: How many more pages to scrape after starting_page. 0 is default and means no pages after. <0 means all valid pages after. If value is higher than the actual number of available pages, collect all valid pages from starting_page until the end of category.\n
     :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.\n
     :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
     :return: A list of Profile objects - optionally sorted.
