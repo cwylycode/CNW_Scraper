@@ -2,7 +2,7 @@ class Profile:
     """
     An object that ontains information from a subject's net worth page (print me for a pretty display of my contents). This object isn't created directly, but rather is made through the scrape functions.
 
-    Note: Certain stats for certain profiles might not exist, as the profile simply doesn't have them on the site. A profile will always have at least a name and net worth.
+    Note: Certain stats for certain profiles might not exist, as the profile simply doesn't have them on the site. A profile will always have at least a name.
 
     :stats: Dictionary containing name, net worth, salary, gender, nationality, etc. - Net Worth gets printed out as a dollar amount, but is actually stored as a real number string.
 

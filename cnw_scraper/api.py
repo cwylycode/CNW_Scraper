@@ -133,7 +133,7 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
                 Logs._log(f"FAILED: '{current_name}' doesn't seem to match search result.",True)
         else:
             Logs._log(f"FAILED: Search for '{current_name}' returned no results.",True)
-    # Get and parse the pages
+    # Get and parse the profiles
     Logs._log("Getting matching profiles ...")
     profile_pages = bf.get_pages(profile_urls)
     profiles = [bf.parse_profile(page["html"]) for page in profile_pages]

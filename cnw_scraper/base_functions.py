@@ -24,8 +24,11 @@ def parse_profile(page_html):
     # Then get the rest from the table
     for table in soup_stats:
         data.update({table.td.text[:-1]:table.td.next_sibling.text})
-    # Change Net Worth to the numerical representation found on the site
-    data["Net Worth"] = soup.find("meta",attrs={"itemprop":"price"})["content"]
+    # If Net Worth exists, change to the numerical representation found on the site, otherwise just give it zero for sanity reasons. Yes, that's right, there are some celebritynetworth.com profiles that don't - *GASP!* - have a net worth listed. Ridiculous, I say!
+    if "Net Worth" in data:
+        data["Net Worth"] = soup.find("meta",attrs={"itemprop":"price"})["content"]
+    else:
+        data["Net Worth"] = "0"
     # Get description if wanted
     desc = []
     if opt.include_description:
