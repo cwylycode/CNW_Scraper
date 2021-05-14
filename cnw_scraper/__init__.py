@@ -21,7 +21,6 @@ The site boasts tens of thousands of profiles, which can be all collected using 
 """
 
 from cnw_scraper.api import(
-    scrape_all,
     scrape_category,
     scrape_map,
     scrape_names,

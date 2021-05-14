@@ -13,7 +13,7 @@ if os.name == "nt":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 def parse_profile(page_html):
-    # Parse the HTML soup on the profile's page and return the data as a Profile object
+    # Parse the HTML soup on the profile's page and return the data as a Profile object.
     Logs._log("Parsing HTML ...",True)
     soup = BeautifulSoup(page_html,features=opt._PARSER,parse_only=SoupStrainer(attrs={"id":"single__main"}))
     soup_name = soup.find(attrs={"itemprop":"name"})["content"]
@@ -21,17 +21,18 @@ def parse_profile(page_html):
     soup_desc = soup.find(attrs={"itemprop":"description"})
     # Get name first...
     data = {"Name":soup_name}
-    # Then get the rest from the table
-    for table in soup_stats:
-        data.update({table.td.text[:-1]:table.td.next_sibling.text})
+    # Then get the stats from the table, if there.
+    if soup_stats:
+        for table in soup_stats:
+            data.update({table.td.text[:-1]:table.td.next_sibling.text})
     # If Net Worth exists, change to the numerical representation found on the site, otherwise just give it zero for sanity reasons. Yes, that's right, there are some celebritynetworth.com profiles that don't - *GASP!* - have a net worth listed. Ridiculous, I say!
     if "Net Worth" in data:
         data["Net Worth"] = soup.find("meta",attrs={"itemprop":"price"})["content"]
     else:
         data["Net Worth"] = "0"
-    # Get description if wanted
+    # Get description if wanted and available.
     desc = []
-    if opt.include_description:
+    if opt.include_description and soup_desc:
         for tag in soup_desc.children:
             if tag.name in ["div","img","table","style"]:
                 # Junk data
@@ -78,18 +79,11 @@ def get_pages(urls):
     Logs._log("Compiling page list ...",True)
     return list(pages)
 
-def get_profiles_from_list_in_page(base_page,target_id):
+def get_profile_links_in_page(base_page,target_id):
     # Run page through soup and get each listed profile URL inside it
-    Logs._log("Getting profile links inside this page ...",True)
     profile_list = BeautifulSoup(base_page,features=opt._PARSER,parse_only=SoupStrainer(attrs={"id":target_id}))
-    if not profile_list:
-        Logs._log("No Profiles found!")
-        return []
     profile_urls = [a["href"] for a in profile_list.select("a")]
-    # Get profiles from URLs
-    profile_pages = get_pages(profile_urls)
-    profiles = [parse_profile(page["html"]) for page in profile_pages]
-    return profiles
+    return profile_urls
 
 def sort_profiles(profiles,sort_by,sort_ascending):
     if sort_by and sort_by in ["name","worth"]:

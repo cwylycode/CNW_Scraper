@@ -4,9 +4,12 @@ import os
 
 class Logs:
     """
-    Handles logging of what this program is doing. It will write logs to either a file or console, or both. Use write_to_file function to write logs to a file at a specified path. The log file, if present, gets overwritten each run, so if you want to save a log file, simply rename the actual file to something else.\n
-    Note: All of the following boolean values are False by default.\n
-    :print_to_console: Use print function to print logs to console?\n
+    Handles logging of what this program is doing. It will write logs to either a file or console, or both. Use write_to_file function to write logs to a file at a specified path. The log file, if present, gets overwritten each run, so if you want to save a log file, simply rename the actual file to something else.
+    
+    Note: All of the following boolean values are False by default.
+    
+    :print_to_console: Use print function to print logs to console?
+    
     :verbose: Some parts of the program use extensive logging for every detail. Enable the extra logging?
     """
     print_to_console = False
@@ -16,10 +19,14 @@ class Logs:
     @classmethod
     def write_to_file(cls,file_path:str="",include_datetime:bool=True):
         """
-        Initialize logging to a file using an established directory. Subsequent calls do nothing, only the first call does anything. If the file_path argument is left out, the default arg is used. The default path is the directory level that calls this function and the name is collected from __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'\n
-        Note: File is created if it isn't there, and if it is, it will be overwritten. Also, actual file writing only occurs upon program exit.\n
-        :file_path: Provide an optional valid directory path (relative to where this function was called from or absolute) and name for the file (name will end with a '.log' extension). E.g. - './my_project/logs/my_cnw_logs' -> 'my_cnw_logs.log' file in logs directory.\n
-        :include_datetime: Bool for whether or not to include a formatted date/time marker for each log entry that gets written out to the file.\n
+        Initialize logging to a file using an established directory. Subsequent calls do nothing, only the first call does anything. If the file_path argument is left out, the default arg is used. The default path is the directory level that calls this function and the name is collected from __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'
+        
+        Note: File is created if it isn't there, and if it is, it will be overwritten. Also, actual file writing only occurs upon program exit.
+        
+        :file_path: Provide an optional valid directory path (relative to where this function was called from or absolute) and name for the file (name will end with a '.log' extension). E.g. - './my_project/logs/my_cnw_logs' -> 'my_cnw_logs.log' file in logs directory.
+        
+        :include_datetime: Bool for whether or not to include a formatted date/time marker for each log entry that gets written out to the file.
+        
         :return: None
         """
         if cls._logger: return

@@ -7,63 +7,55 @@ from cnw_scraper.logs import Logs
 from cnw_scraper.options import Options as opt
 from bs4 import BeautifulSoup,SoupStrainer
 
-def scrape_all(sort_by:str="",sort_ascending:bool=True):
+def scrape_category(category:Category,starting_page:int=1,ending_page:int=0,sort_by:str="",sort_ascending:bool=True):
     """
-    Make the website sweat! They knew what they were getting themselves into when they decided to fawn over the rich and famous. Long live the proletariat!\n
-    This is mostly just a joke function. Specifically, it's a generator that acts as a handle for the scrape_category function. It calls scrape_category on every category (alphabetically) and collects all the profiles for them on every page, yielding one entire category's worth of profiles at a time. It's basically the same thing as if you yourself were to call scrape_category for every category inside of a loop.\n
-    Note: This generator WILL take a while to complete if you decide to run till exhaustion, so it's best to make use of the logging system to know how far it has progressed.\n
-    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.\n
-    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
-    :return: A generator.
-    """
-    Logs._log("Starting All function ...")
-    for cat in Category:
-        profiles = scrape_category(cat,1,-1,sort_by,sort_ascending)
-        Logs._log(f"Compilation of {cat.name} profiles finished ...")
-        profiles = bf.sort_profiles(profiles,sort_by,sort_ascending)
-        yield profiles
-    # Wrap up
-    Logs._log("All function finished.")
-
-def scrape_category(category:Category,starting_page:int=1,additional_pages:int=0,sort_by:str="",sort_ascending:bool=True):
-    """
-    Get the profiles from a category within a page range. Pages are scraped from the very start of the starting page, all the way to the very last profile on the last additional page. By default, get only the profiles from the first page of the category.\n
-    Note: Some categories have hundreds of pages and may take a considerable amount of time to collect them all (relative to the other scrape functions) - this is due to the site not having a way of getting the total page count for the categories, which means that each page has to be tested for validity, which breaks the speed gained from async HTTP requests. Regardless, you can activate logging to see how far the function has progressed if wait time's a factor.\n
-    :category: Enum from Category class to use. E.g. - category = Category.AUTHORS\n
-    :starting_page: The page to start scraping (>0). If page is out of range with category, a page exception is thrown.\n
-    :additional_pages: How many more pages to scrape after starting_page. 0 is default and means no pages after. <0 means all valid pages after. If value is higher than the actual number of available pages, collect all valid pages from starting_page until the end of category.\n
-    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.\n
-    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
+    Get the profiles from a category within a page range. Pages are scraped from the very start of the starting page, all the way to the very last profile on the ending page. By default, get only the profiles from the first page of the category. All categories start on page 1.
+    
+    Note: Some categories have hundreds of pages and thousands of profiles and may take a considerable amount of time to collect them all (relative to the other scrape functions).
+    
+    Tip: Because the website offers no method of getting the total number of pages in a category (without visiting the page to see if it is valid - or hacking), it is up to the user to determine what the starting and ending pages should be. This is done to speed up page collection for async HTTP requests. It's best to check the site and find how many pages exist by visiting the category and manually finding the last page. Out-of-range pages will return a 404 and will be safely filtered out upon profile parsing. Don't set the ending page too high otherwise the requested pages will be mostly 404 junk - and that wastes electricity and bandwidth. Think about the environment.
+    
+    :category: Enum from Category class to use. E.g. - category = Category.AUTHORS
+    
+    :starting_page: The page to start scraping (>0). If less than 1, it will be set to 1.
+    
+    :ending_page: The last page to scrape (>=starting_page). Inclusive. If less than starting_page, it will be set to starting_page.
+    
+    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.
+    
+    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?
+    
     :return: A list of Profile objects - optionally sorted.
     """
     Logs._log("Starting Category function ...")
+    if starting_page < 1:
+        starting_page = 1
     if not isinstance(category,Category):
         raise Exception("Invalid Category Parameter.")
+    if starting_page > ending_page:
+        ending_page = starting_page
     base_url = "https://www.celebritynetworth.com/category/" + category.value + "/page/"
+    # Get category pages containing profiles from start to end, filtering out 404s.
     Logs._log(f"Getting pages from {category.name} category ...")
-    # Get profiles from starting page and additional pages, if applicable
+    cat_urls = [base_url+str(i)+"/" for i in range(starting_page,ending_page+1)]
+    Logs._log(f"Getting {len(cat_urls)} page(s) ...")
+    cat_pages = list(filter(lambda x: not (x["status"]>=400), bf.get_pages(cat_urls)))
+    Logs._log(f"Collected {len(cat_pages)} valid page(s) ...")
+    # Get profiles
     profiles = []
-    count,i = starting_page,0
-    while True:
-        # Get category page from site
-        Logs._log(f"Getting page {count} ...")
-        cat_page = bf.get_pages([base_url+str(count)+'/'])[0]
-        # Check validity for starting page or current page
-        if cat_page["status"] >= 400 or starting_page < 1:
-            if count == starting_page:
-                raise Exception("Starting page is out of range of category.")
-            Logs._log(f"Reached end of category with {i} page(s) collected ...")
-            break
-        # Collect the profiles from the current page
-        Logs._log("Parsing page of profiles ...")
-        page_profiles = bf.get_profiles_from_list_in_page(cat_page["html"],"post_listing")
-        profiles.extend(page_profiles)
-        # All pages gotten?
-        i += 1
-        if count == starting_page+additional_pages:
-            Logs._log(f"Got all requested pages ({i}) ...")
-            break
-        count += 1
+    if cat_pages:
+        # Get all profile links in the pages
+        profile_urls = []
+        for page in cat_pages:
+            profile_urls.extend(bf.get_profile_links_in_page(page["html"],"post_listing"))
+        # Get profiles from pages and parse them
+        Logs._log(f"Getting {len(profile_urls)} profile(s) from pages ...")
+        profile_pages = bf.get_pages(profile_urls)
+        Logs._log("Parsing pages of profiles ...")
+        profiles = [bf.parse_profile(page["html"]) for page in profile_pages]
+    else:
+        # The result of nothing but invalid pages
+        Logs._log("No Profiles found!")
     # Wrap up
     Logs._log("Profiles compilation finished ...")
     profiles = bf.sort_profiles(profiles,sort_by,sort_ascending)
@@ -72,21 +64,27 @@ def scrape_category(category:Category,starting_page:int=1,additional_pages:int=0
 
 def scrape_map(location:Location,sort_by:str="",sort_ascending:bool=True):
     """
-    Get the top 100 profiles from a map location on the site.\n
-    :location: Enum from Location class to use. E.g. - location = Location.USA\n
-    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.\n
-    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
+    Get the top 100 profiles from a map location on the site.
+    
+    :location: Enum from Location class to use. E.g. - location = Location.USA
+    
+    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.
+    
+    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?
+    
     :return: A list of Profile objects - optionally sorted.
     """
     Logs._log("Starting Map function ...")
     if not isinstance(location,Location):
         raise Exception("Invalid Location Parameter")
-    map_url = "https://www.celebritynetworth.com/map/" + location.value + "/"
     Logs._log(f"Getting map page for {location.name} ...")
+    map_url = "https://www.celebritynetworth.com/map/" + location.value + "/"
     html = bf.get_pages([map_url])[0]["html"]
     Logs._log("Collecting profile URLs from map ...")
-    # Get profiles from list inside page
-    profiles = bf.get_profiles_from_list_in_page(html,"cnwMaps_mainProfileList")
+    # Get profile links from list inside page and parse the profiles
+    profile_urls = bf.get_profile_links_in_page(html,"cnwMaps_mainProfileList")
+    profile_pages = bf.get_pages(profile_urls)
+    profiles = [bf.parse_profile(page["html"]) for page in profile_pages]
     # Wrap up
     Logs._log("Profiles compilation finished ...")
     profiles = bf.sort_profiles(profiles,sort_by,sort_ascending)
@@ -95,12 +93,18 @@ def scrape_map(location:Location,sort_by:str="",sort_ascending:bool=True):
 
 def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     """
-    Use the site's search feature to check for each name provided and collect profile data on the subject if the name matches the query.\n
-    If a name isn't found/doesn't match, no profile for it will be returned.\n
-    Tip: Be sure to not use prefixes (Dr./Mr./Mrs./etc.) or hyphens and use only one space between words - the search engine on the site can be picky. Usually the first/last name is enough to get the right profile. Also, duplicate names are discarded - only one unique profile will be returned per name.\n
-    :names: An iterable of strings, with each being the real name (and/or 'stage name') of a person/thing (alphanumeric/spaces only, symbols get stripped). E.g. - ['Elon Musk', 'Apple', 'OPRAH', 'DEADMAU5', 'bill gates', 'Dwayne "The Rock" Johnson', 'The Undertaker']\n
-    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.\n
-    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
+    Use the site's search feature to check for each name provided and collect profile data on the subject if the name matches the query.
+    
+    If a name isn't found/doesn't match, no profile for it will be returned.
+    
+    Tip: Be sure to not use prefixes (Dr./Mr./Mrs./etc.) or hyphens and use only one space between words - the search engine on the site can be picky. Usually the first/last name is enough to get the right profile. Also, duplicate names are discarded - only one unique profile will be returned per name.
+    
+    :names: An iterable of strings, with each being the real name (and/or 'stage name') of a person/thing (alphanumeric/spaces only, symbols get stripped). E.g. - ['Elon Musk', 'Apple', 'OPRAH', 'DEADMAU5', 'bill gates', 'Dwayne "The Rock" Johnson', 'The Undertaker']
+    
+    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.
+    
+    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?
+    
     :return: A list of Profile objects - optionally sorted.
     """
     Logs._log("Starting Names function ...")
@@ -143,12 +147,31 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     Logs._log("Names function finished.")
     return profiles
 
+def scrape_random():
+    """
+    Uses the site's random feature to grab a random profile.
+    
+    :return: A single Profile object from a randomly chosen subject.
+    """
+    Logs._log("Starting Random function ...")
+    url = "https://www.celebritynetworth.com/random/"
+    html = bf.get_pages([url])[0]["html"]
+    profile = bf.parse_profile(html)
+    # Wrap up
+    Logs._log("Profile compilation finished ...")
+    Logs._log("Random function finished.")
+    return profile
+
 def scrape_top(category:Category=None,sort_by:str="",sort_ascending:bool=True):
     """
-    Get the top 50 richest profiles from a category. If category is left at default (None), get the top 100 overall richest profiles in the world instead.\n
-    :category: Enum from Category class to use. E.g. - category = Category.AUTHORS /OR/ category = None = Top 100 list\n
-    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.\n
-    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?\n
+    Get the top 50 richest profiles from a category. If category is left at default (None), get the top 100 overall richest profiles in the world instead.
+    
+    :category: Enum from Category class to use. E.g. - category = Category.AUTHORS /OR/ category = None = Top 100 list
+    
+    :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.
+    
+    :sort_ascending: Should the sorted profiles be returned in ascending or descending form?
+    
     :return: A list of Profile objects - optionally sorted.
     """
     Logs._log("Starting Top function ...")
@@ -163,23 +186,11 @@ def scrape_top(category:Category=None,sort_by:str="",sort_ascending:bool=True):
     html = bf.get_pages([top_url])[0]["html"]
     Logs._log("Collecting profile URLs from list ...")
     # Get profiles from list inside page
-    profiles = bf.get_profiles_from_list_in_page(html,"top_100_list")
+    profile_urls = bf.get_profile_links_in_page(html,"top_100_list")
+    profile_pages = bf.get_pages(profile_urls)
+    profiles = [bf.parse_profile(page["html"]) for page in profile_pages]
     # Wrap up
     Logs._log("Profiles compilation finished ...")
     profiles = bf.sort_profiles(profiles,sort_by,sort_ascending)
     Logs._log("Top function finished.")
     return profiles
-
-def scrape_random():
-    """
-    Uses the site's random feature to grab a random profile.\n
-    :return: A single Profile object from a randomly chosen subject.
-    """
-    Logs._log("Starting Random function ...")
-    url = "https://www.celebritynetworth.com/random/"
-    html = bf.get_pages([url])[0]["html"]
-    profile = bf.parse_profile(html)
-    # Wrap up
-    Logs._log("Profile compilation finished ...")
-    Logs._log("Random function finished.")
-    return profile
