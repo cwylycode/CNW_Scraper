@@ -11,7 +11,7 @@ Installation is done with PIP and can be done from GitHub, either as a Git insta
 **Requirements:**
 ```
 python >= 3.8
-(see setup.py for full dependencies that will be installed with this package.)
+(see setup.py or requirements.txt for full dependencies that will be installed with this package.)
 ```
 
 **Install from GitHub (you need Git):**
