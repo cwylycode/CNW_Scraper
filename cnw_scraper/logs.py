@@ -19,7 +19,7 @@ class Logs:
     @classmethod
     def write_to_file(cls,file_path:str="",include_datetime:bool=True):
         """
-        Initialize logging to a file using an established directory. Subsequent calls do nothing, only the first call does anything. If the file_path argument is left out, the default arg is used. The default path is the directory level that calls this function and the name is collected from __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'
+        Initialize logging to a .log file using an established directory. Subsequent calls do nothing, only the first call does anything. If the file_path argument is left out, the default arg is used. The default path is the directory level that calls this function and the name is collected from __main__ with modifications. E.g. - 'my_script.py' -> 'my_script-cnw.log'
         
         Note: File is created if it isn't there, and if it is, it will be overwritten. Also, actual file writing only occurs upon program exit.
         

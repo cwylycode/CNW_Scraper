@@ -13,7 +13,7 @@ def scrape_category(category:Category,starting_page:int=1,ending_page:int=0,sort
     
     Note: Some categories have hundreds of pages and thousands of profiles and may take a considerable amount of time to collect them all (relative to the other scrape functions).
     
-    Tip: Because the website offers no method of getting the total number of pages in a category (without visiting the page to see if it is valid - or hacking), it is up to the user to determine what the starting and ending pages should be. This is done to speed up page collection for async HTTP requests. It's best to check the site and find how many pages exist by visiting the category and manually finding the last page. Out-of-range pages will return a 404 and will be safely filtered out upon profile parsing. Don't set the ending page too high otherwise the requested pages will be mostly 404 junk - and that wastes electricity and bandwidth. Think about the environment.
+    Tip: Because the website offers no method of getting the total number of pages in a category (without visiting the page to see if it is valid - or through hacking), it is up to the user to determine what the starting and ending pages should be. This is done to speed up page collection for async HTTP requests. It's best to test how many pages exist first before collecting them. Out-of-range pages will return a 404 and will be safely filtered out upon profile parsing. Don't set the ending page too high otherwise the requested pages will be mostly 404 junk - and that wastes electricity and bandwidth. Think about the environment.
     
     :category: Enum from Category class to use. E.g. - category = Category.AUTHORS
     
@@ -93,9 +93,7 @@ def scrape_map(location:Location,sort_by:str="",sort_ascending:bool=True):
 
 def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     """
-    Use the site's search feature to check for each name provided and collect profile data on the subject if the name matches the query.
-    
-    If a name isn't found/doesn't match, no profile for it will be returned.
+    Use the site's search feature to check for each name provided and collect profile data on the subject if the name matches the query. If a name isn't found/doesn't match, no profile for it will be returned.
     
     Tip: Be sure to not use prefixes (Dr./Mr./Mrs./etc.) or hyphens and use only one space between words - the search engine on the site can be picky. Usually the first/last name is enough to get the right profile. Also, duplicate names are discarded - only one unique profile will be returned per name.
     
