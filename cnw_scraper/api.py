@@ -95,7 +95,7 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     """
     Use the site's search feature to check for each name provided and collect profile data on the subject if the name matches the query. If a name isn't found/doesn't match, no profile for it will be returned.
     
-    Tip: Be sure to not use prefixes (Dr./Mr./Mrs./etc.) or hyphens and use only one space between words - the search engine on the site can be picky. Usually the first/last name is enough to get the right profile. Also, duplicate names are discarded - only one unique profile will be returned per name.
+    Tip: Be sure to not use prefixes (Dr./Mr./Mrs./etc.) - suffixes are usually fine, and use only one space between words - the search engine on the site can be picky. Usually the first/last name is enough to get the right profile. Also, duplicate names are discarded - only one unique profile will be returned per name.
     
     :names: An iterable of strings, with each being the real name (and/or 'stage name') of a person/thing (alphanumeric/spaces only, symbols get stripped). E.g. - ['Elon Musk', 'Apple', 'OPRAH', 'DEADMAU5', 'bill gates', 'Dwayne "The Rock" Johnson', 'The Undertaker']
     
@@ -107,7 +107,7 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     """
     Logs._log("Starting Names function ...")
     search_urls = []
-    parse_name = lambda n: "".join(filter(lambda x: x.isalnum() or x == " ", n)).strip()
+    parse_name = lambda n: "".join(filter(lambda x: x.isalnum() or x == " " or x == "-", n)).strip()
     Logs._log("Creating search URLs ...")
     for name in names:
         # Parse current name for URL query and add to search list - with no duplicate URLs
@@ -128,7 +128,7 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
             # There's a lead search result, check if the contents have our target's name
             txt = lead.text.lower()
             if all([x in txt for x in current_name.lower().split()]):
-                # It does - get the target's profile url and 
+                # It does - get the target's profile url
                 Logs._log(f"FOUND: '{current_name}' matches with result.",True)
                 profile_urls.append(lead.find("a")["href"])
             else:
