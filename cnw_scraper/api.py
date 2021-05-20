@@ -13,7 +13,7 @@ def scrape_category(category:Category,starting_page:int=1,ending_page:int=0,sort
     
     Note: Some categories have hundreds of pages and thousands of profiles and may take a considerable amount of time to collect them all (relative to the other scrape functions).
     
-    Tip: Because the website offers no method of getting the total number of pages in a category (without visiting the page to see if it is valid - or through hacking), it is up to the user to determine what the starting and ending pages should be. This is done to speed up page collection for async HTTP requests. It's best to test how many pages exist first before collecting them. Out-of-range pages will return a 404 and will be safely filtered out upon profile parsing. Don't set the ending page too high otherwise the requested pages will be mostly 404 junk - and that wastes electricity and bandwidth. Think about the environment.
+    Tip: Because the website offers no method of getting the total number of pages in a category (without actually visiting the page to see if it is valid - or through hacking), it is up to the user to determine what the starting and ending pages should be. This is done to speed up page collection for async HTTP requests. It's best to test how many pages exist first before collecting them. Out-of-range pages will return a 404 and will be safely filtered out upon profile parsing. Don't set the ending page too high otherwise the requested pages will be mostly 404 junk - and that wastes electricity and bandwidth. Think about the environment.
     
     :category: Enum from Category class to use. E.g. - category = Category.AUTHORS
     
@@ -95,9 +95,11 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     """
     Use the site's search feature to check for each name provided and collect profile data on the subject if the name matches the query. If a name isn't found/doesn't match, no profile for it will be returned.
     
-    Tip: Be sure to not use prefixes (Dr./Mr./Mrs./etc.) - suffixes are usually fine, and use only one space between words - the search engine on the site can be picky. Usually the first/last name is enough to get the right profile. Also, duplicate names are discarded - only one unique profile will be returned per name.
+    Tip: Be sure to not use prefixes (Dr./Mr./Mrs./etc.) - suffixes are usually fine, and use only one space between words - the search engine on the site can be picky. Usually the first/last name is enough to get the right profile.
+
+    Note: Duplicate names or 'similar names' are not discarded or cleaned whatsoever. It is up to you to provide a list of unique and clean names.
     
-    :names: An iterable of strings, with each being the real name (and/or 'stage name') of a person/thing (alphanumeric/spaces only, symbols get stripped). E.g. - ['Elon Musk', 'Apple', 'OPRAH', 'DEADMAU5', 'bill gates', 'Dwayne "The Rock" Johnson', 'The Undertaker']
+    :names: An iterable of strings, with each being the real name (and/or 'stage name') of a person/thing (alphanumeric/spaces/hyphens/apostrophes only, everything else gets stripped). E.g. - ['Elon Musk', 'Apple', 'OPRAH', 'DEADMAU5', 'bill gates', 'Dwayne "The Rock" Johnson', 'The Undertaker']
     
     :sort_by: Sort the list of profiles by either 'name' or 'worth' - default (empty string), or invalid, means no sorting is applied.
     
@@ -107,13 +109,13 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
     """
     Logs._log("Starting Names function ...")
     search_urls = []
-    parse_name = lambda n: "".join(filter(lambda x: x.isalnum() or x == " " or x == "-", n)).strip()
+    valid_chars = lambda c: c.isalnum() or any([x in c for x in [" ","-","'"]])
+    parse_name = lambda n: "".join(filter(valid_chars, n)).strip()
     Logs._log("Creating search URLs ...")
     for name in names:
-        # Parse current name for URL query and add to search list - with no duplicate URLs
-        query = parse_name(name)
-        url = "https://www.celebritynetworth.com/dl/" + query.replace(" ", "-").lower() + "/"
-        if url in search_urls: continue
+        # Parse current name for URL query and add to search list - with no duplicate URLs or names
+        query = parse_name(name).replace(" ", "-").replace("'","")
+        url = "https://www.celebritynetworth.com/dl/" + query.lower() + "/"
         search_urls.append(url)
     Logs._log("Getting search results ...")
     # Collect the search result pages from the URLs
@@ -129,12 +131,12 @@ def scrape_names(names:list,sort_by:str="",sort_ascending:bool=True):
             txt = lead.text.lower()
             if all([x in txt for x in current_name.lower().split()]):
                 # It does - get the target's profile url
-                Logs._log(f"FOUND: '{current_name}' matches with result.",True)
+                Logs._log(f"FOUND: '{names[i]}' matches with result.",True)
                 profile_urls.append(lead.find("a")["href"])
             else:
-                Logs._log(f"FAILED: '{current_name}' doesn't seem to match search result.",True)
+                Logs._log(f"FAILED: '{names[i]}' doesn't seem to match search result.",True)
         else:
-            Logs._log(f"FAILED: Search for '{current_name}' returned no results.",True)
+            Logs._log(f"FAILED: Search for '{names[i]}' returned no results.",True)
     # Get and parse the profiles
     Logs._log("Getting matching profiles ...")
     profile_pages = bf.get_pages(profile_urls)
