@@ -9,7 +9,7 @@ with open("README.md") as f:
 
 setup(
     name="cnw_scraper",
-    version="1.0.1",
+    version="1.0.2",
     description="Scrapes profile data from people and things you specify (or generalize).",
     license="MIT",
     long_description=ld,

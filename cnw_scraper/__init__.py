@@ -1,5 +1,5 @@
-__version__ = "1.0.1"
-__doc__ = """
+__version__ = "1.0.2"
+__doc__="""
 Celebrity Net Worth website scraper
 ===================================
 Scrapes profile data from people and things on the website celebritynetworth.com that you specify (or generalize).
