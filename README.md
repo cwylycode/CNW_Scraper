@@ -1,8 +1,6 @@
 # Celebrity Net Worth website scraper
 Scrapes profile data from people and things on the website celebritynetworth.com that you specify (or generalize).
 
-Coded in Python by hexadeci-male.
-
 ## Install
 Installation is done with PIP and can be done from GitHub, either as a Git install or a download/clone that you cd into. This package isn't available on PyPI, in case you were wondering.
 
@@ -16,7 +14,7 @@ python >= 3.8
 
 **Install from GitHub (you need Git):**
 ```
-pip install git+https://github.com/hexadeci-male/CNW_Scraper.git
+pip install git+https://github.com/cwylycode/CNW_Scraper.git
 ```
 
 **Install from repo:**

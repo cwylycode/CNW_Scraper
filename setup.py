@@ -14,8 +14,8 @@ setup(
     license="MIT",
     long_description=ld,
     long_description_content_type="text/markdown",
-    author="hexadeci-male",
-    url="https://github.com/hexadeci-male/CNW_Scraper",
+    author="cwylycode",
+    url="https://github.com/cwylycode/CNW_Scraper",
     packages=['cnw_scraper'],
     install_requires=[
         "aiohttp==3.7.4.post0",
